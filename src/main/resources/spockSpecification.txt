@@ -1,0 +1,18 @@
+Name: Shipment
+
+Spec: order ready to pickup
+given
+Shipment ordered [event]
+Shipment packed [event]
+when
+then
+Shipment Ready to pickup [event]
+Spec: payment failed
+given
+Shipment ordered [event]
+Shipment packed [event]
+Payment failed [event]
+when
+then
+Transaction rollback [event]
+Payment failed

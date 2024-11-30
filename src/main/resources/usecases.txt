@@ -1,4 +1,4 @@
 Spec: order ready to pickup
 Shipment ordered
 Shipment packed
-Shipment Ready to pickup
+Shipment Ready to pickup  

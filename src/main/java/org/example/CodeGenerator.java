@@ -2,21 +2,15 @@ package org.example;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import pl.sycamore.filetransformer.spock.TextFileIntoSpockSpecification;
 
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CodeGenerator {
     public static void main(String[] args) throws Exception {
-        // Input file (describing use cases)
-        String inputFilePath = "src/main/resources/usecases.txt";
-
-        // Read the use case descriptions from the text file
-        List<UseCase> useCases = Files.lines(Paths.get(inputFilePath))
-                .map(UseCase::new)
-                .collect(Collectors.toList());
+        String inputFilePath = "src/main/resources/spockSpecification.txt";
 
         // Initialize Freemarker configuration
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
@@ -24,11 +18,14 @@ public class CodeGenerator {
         cfg.setDefaultEncoding("UTF-8");
 
         // Load the template
-        Template template = cfg.getTemplate("spockTestTemplate.ftl");
+        Template template = cfg.getTemplate("spockSpecification.ftl");
 
         // Generate output file
         Map<String, Object> templateData = new HashMap<>();
-        templateData.put("useCases", useCases);
+
+
+        TextFileIntoSpockSpecification.transform(Paths.get(inputFilePath))
+                .ifPresent(it -> templateData.put("spec", it));
 
         Files.createDirectories(Paths.get("generated"));
         File outputFile = new File("generated/SpockTest.groovy");
