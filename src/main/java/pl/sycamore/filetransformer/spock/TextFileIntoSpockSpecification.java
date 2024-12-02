@@ -2,16 +2,20 @@ package pl.sycamore.filetransformer.spock;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
-import pl.sycamore.filetransformer.adapter.MiroContentNamespace;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import static pl.sycamore.string.StringNamespace.splitListByText;
 
 public class TextFileIntoSpockSpecification {
+    public static List<Ability> abilities() {
+        return List.of();
+    }
+
     public static Optional<SpockSpecification> transform(String packageName, Path filePath) {
         try {
             var fileLines = Files.lines(filePath)
@@ -33,7 +37,7 @@ public class TextFileIntoSpockSpecification {
                         var givenCodeBlock = givenText.stream()
                                 .filter(t -> t.contains("event"))
                                 .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
-                                .map(SpockCodeBlockNamespace::eventOccurred)
+                                .map(JavaGeneratorNamespace.publishEventInEventPublisherAbility())
                                 .toList();
                         var when = "-";
                         var thenText = it.stream()
@@ -41,9 +45,8 @@ public class TextFileIntoSpockSpecification {
                                 .toList();
                         var then = String.join(" and ", thenText);
                         var thenCodeBlock = thenText.stream()
-                                .map(MiroContentNamespace::generateCodeFromTag)
-                                .filter(Optional::isPresent)
-                                .map(Optional::get)
+                                .filter(t -> t.contains("event"))
+                                .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
                                 .map(SpockCodeBlockNamespace::eventOccurrenceAssertion)
                                 .toList();
                         return new GivenWhenThen(given, givenCodeBlock, when, then, thenCodeBlock);

@@ -7,6 +7,11 @@ public final class StringNamespace {
     private StringNamespace() {
     }
 
+    public static String toSnakeCase(String s) {
+        return s.replaceAll(" ", "_")
+                .toLowerCase();
+    }
+
     public static List<List<String>> splitListByText(List<String> originalList, String text) {
         List<List<String>> result = new ArrayList<>();
         List<String> currentList = null;
