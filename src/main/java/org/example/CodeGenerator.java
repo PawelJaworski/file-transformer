@@ -9,6 +9,8 @@ import java.nio.file.*;
 import java.util.*;
 
 public class CodeGenerator {
+    private static final String PACKAGE_NAME = "com.example.shipment";
+
     public static void main(String[] args) throws Exception {
         String inputFilePath = "src/main/resources/spockSpecification.txt";
 
@@ -24,11 +26,12 @@ public class CodeGenerator {
         Map<String, Object> templateData = new HashMap<>();
 
 
-        TextFileIntoSpockSpecification.transform(Paths.get(inputFilePath))
+        TextFileIntoSpockSpecification.transform(PACKAGE_NAME, Paths.get(inputFilePath))
                 .ifPresent(it -> templateData.put("spec", it));
 
-        Files.createDirectories(Paths.get("generated"));
-        File outputFile = new File("generated/SpockTest.groovy");
+        var generatedDirectory = "generated/" + PACKAGE_NAME.replaceAll("\\.", "/");
+        Files.createDirectories(Paths.get(generatedDirectory));
+        File outputFile = new File(generatedDirectory + "/SpockTest.groovy");
         try (Writer writer = new FileWriter(outputFile)) {
             template.process(templateData, writer);
         }

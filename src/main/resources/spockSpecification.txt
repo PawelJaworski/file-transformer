@@ -15,4 +15,3 @@ Payment failed [event]
 when
 then
 Transaction rollback [event]
-Payment failed

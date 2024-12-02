@@ -1,4 +1,4 @@
-package com.example.tests
+package ${spec.packageName()}
 
 import spock.lang.Specification
 

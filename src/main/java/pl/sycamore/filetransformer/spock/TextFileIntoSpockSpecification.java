@@ -2,6 +2,7 @@ package pl.sycamore.filetransformer.spock;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
+import pl.sycamore.filetransformer.adapter.MiroContentNamespace;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,7 +12,7 @@ import java.util.Optional;
 import static pl.sycamore.string.StringNamespace.splitListByText;
 
 public class TextFileIntoSpockSpecification {
-    public static Optional<SpockSpecification> transform(Path filePath) {
+    public static Optional<SpockSpecification> transform(String packageName, Path filePath) {
         try {
             var fileLines = Files.lines(filePath)
                     .toList();
@@ -40,16 +41,15 @@ public class TextFileIntoSpockSpecification {
                                 .toList();
                         var then = String.join(" and ", thenText);
                         var thenCodeBlock = thenText.stream()
-                                .filter(t -> t.contains("event"))
-                                .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
+                                .map(MiroContentNamespace::generateCodeFromTag)
+                                .filter(Optional::isPresent)
+                                .map(Optional::get)
                                 .map(SpockCodeBlockNamespace::eventOccurrenceAssertion)
                                 .toList();
                         return new GivenWhenThen(given, givenCodeBlock, when, then, thenCodeBlock);
                     })
                     .toList();
-
-
-            return Optional.of(new SpockSpecification(className, gwtList));
+            return Optional.of(new SpockSpecification(packageName, className, gwtList));
         } catch (IOException e) {
             System.err.println(e);
             return Optional.empty();
