@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static pl.sycamore.string.StringNamespace.splitListByText;
 
@@ -29,26 +30,19 @@ public class TextFileIntoSpockSpecification {
 
             var gwtList = splitListByText(fileLines, "Spec: ").stream()
                     .map(it -> {
-                        var givenText = it.stream()
-                                .skip(it.indexOf("given") + 1)
-                                .limit(it.indexOf("when") - it.indexOf("given") - 1)
-                                .toList();
-                        var given = String.join(" and ", givenText);
-                        var givenCodeBlock = givenText.stream()
-                                .filter(t -> t.contains("event"))
-                                .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
-                                .map(JavaGeneratorNamespace.publishEventInEventPublisherAbility())
-                                .toList();
+                        var given = givenText()
+                                .andThen(given())
+                                .apply(it);
+                        var givenCodeBlock = givenText()
+                                .andThen(givenCodeBlock())
+                                .apply(it);
                         var when = "-";
-                        var thenText = it.stream()
-                                .skip(it.indexOf("then") + 1)
-                                .toList();
-                        var then = String.join(" and ", thenText);
-                        var thenCodeBlock = thenText.stream()
-                                .filter(t -> t.contains("event"))
-                                .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
-                                .map(SpockCodeBlockNamespace::eventOccurrenceAssertion)
-                                .toList();
+                        var then = thenText()
+                                .andThen(then())
+                                .apply(it);
+                        var thenCodeBlock = thenText()
+                                .andThen(thenCodeBlock())
+                                .apply(it);
                         return new GivenWhenThen(given, givenCodeBlock, when, then, thenCodeBlock);
                     })
                     .toList();
@@ -59,7 +53,40 @@ public class TextFileIntoSpockSpecification {
         }
     }
 
+    private static Function<List<String>, String> given() {
+        return givenText -> String.join(" and ", givenText);
+    }
 
+    private static Function<List<String>, List<String>> givenCodeBlock() {
+        return givenText -> givenText.stream()
+                .filter(t -> t.contains("event"))
+                .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
+                .map(JavaGeneratorNamespace.publishEventInEventPublisherAbility())
+                .toList();
+    }
 
+    private static Function<List<String>, List<String>> givenText() {
+        return it -> it.stream()
+                .skip(it.indexOf("given") + 1)
+                .limit(it.indexOf("when") - it.indexOf("given") - 1)
+                .toList();
+    }
 
+    private static Function<List<String>, String> then() {
+        return thenText -> String.join(" and ", thenText);
+    }
+
+    private static Function<List<String>, List<String>> thenCodeBlock() {
+        return thenText -> thenText.stream()
+                .filter(t -> t.contains("event"))
+                .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
+                .map(SpockCodeBlockNamespace::eventOccurrenceAssertion)
+                .toList();
+    }
+
+    private static Function<List<String>, List<String>> thenText() {
+        return specText -> specText.stream()
+                .skip(specText.indexOf("then") + 1)
+                .toList();
+    }
 }
