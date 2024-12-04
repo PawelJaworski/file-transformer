@@ -29,20 +29,20 @@ public class TextFileIntoSpockSpecification {
                     .orElseThrow();
 
             var gwtList = splitListByText(fileLines, "Spec: ").stream()
-                    .map(it -> {
-                        var given = givenText()
-                                .andThen(given())
-                                .apply(it);
-                        var givenCodeBlock = givenText()
-                                .andThen(givenCodeBlock())
-                                .apply(it);
+                    .map(specText -> {
+                        var given = extractGivenText()
+                                .andThen(generateGivenDescription())
+                                .apply(specText);
+                        var givenCodeBlock = extractGivenText()
+                                .andThen(generateGivenCodeBlock())
+                                .apply(specText);
                         var when = "-";
-                        var then = thenText()
+                        var then = extractThenText()
                                 .andThen(then())
-                                .apply(it);
-                        var thenCodeBlock = thenText()
-                                .andThen(thenCodeBlock())
-                                .apply(it);
+                                .apply(specText);
+                        var thenCodeBlock = extractThenText()
+                                .andThen(generateThenCodeBlock())
+                                .apply(specText);
                         return new GivenWhenThen(given, givenCodeBlock, when, then, thenCodeBlock);
                     })
                     .toList();
@@ -53,11 +53,11 @@ public class TextFileIntoSpockSpecification {
         }
     }
 
-    private static Function<List<String>, String> given() {
+    private static Function<List<String>, String> generateGivenDescription() {
         return givenText -> String.join(" and ", givenText);
     }
 
-    private static Function<List<String>, List<String>> givenCodeBlock() {
+    private static Function<List<String>, List<String>> generateGivenCodeBlock() {
         return givenText -> givenText.stream()
                 .filter(t -> t.contains("event"))
                 .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
@@ -65,7 +65,7 @@ public class TextFileIntoSpockSpecification {
                 .toList();
     }
 
-    private static Function<List<String>, List<String>> givenText() {
+    private static Function<List<String>, List<String>> extractGivenText() {
         return it -> it.stream()
                 .skip(it.indexOf("given") + 1)
                 .limit(it.indexOf("when") - it.indexOf("given") - 1)
@@ -76,7 +76,7 @@ public class TextFileIntoSpockSpecification {
         return thenText -> String.join(" and ", thenText);
     }
 
-    private static Function<List<String>, List<String>> thenCodeBlock() {
+    private static Function<List<String>, List<String>> generateThenCodeBlock() {
         return thenText -> thenText.stream()
                 .filter(t -> t.contains("event"))
                 .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
@@ -84,7 +84,7 @@ public class TextFileIntoSpockSpecification {
                 .toList();
     }
 
-    private static Function<List<String>, List<String>> thenText() {
+    private static Function<List<String>, List<String>> extractThenText() {
         return specText -> specText.stream()
                 .skip(specText.indexOf("then") + 1)
                 .toList();
