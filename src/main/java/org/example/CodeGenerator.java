@@ -2,6 +2,7 @@ package org.example;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import pl.sycamore.filetransformer.code.MainJavaNamespace;
 import pl.sycamore.filetransformer.code.TestJavaNamespace;
 import pl.sycamore.filetransformer.spock.*;
 
@@ -9,6 +10,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.example.Functor.get;
 
@@ -32,7 +34,8 @@ public class CodeGenerator {
 
         var specText = Files.lines(Paths.get(inputFilePath))
                 .toList();
-        generatesEventPublisherAbility(specText);
+        generateEvents(specText);
+        generateEventPublisherAbility(specText);
 
         TextFileIntoSpockSpecification.transform(PACKAGE_NAME, Paths.get(inputFilePath))
                 .ifPresent(it -> templateData.put("spec", it));
@@ -47,7 +50,24 @@ public class CodeGenerator {
         System.out.println("Spock test generated at: " + outputFile.getAbsolutePath());
     }
 
-    private static void generatesEventPublisherAbility(List<String> specText) throws IOException {
+    private static void generateEvents(List<String> specText) throws IOException {
+        var checkIt = Stream.concat(
+                get(MiroTextNamespace.extractText(specText, "given", "when"))
+                        .then(it -> MiroTextNamespace.findByTag(it, "event"))
+                        .value().stream(),
+                get(MiroTextNamespace.extractText(specText, "then"))
+                        .then(it -> MiroTextNamespace.findByTag(it, "event"))
+                        .value().stream()
+        ).distinct()
+                .map(it -> MainJavaNamespace.event(it, PACKAGE_NAME + "/application/event"))
+                .toList().getFirst();
+
+        var path = Paths.get("/Users/paweljaworski/projects/github/melanz-trans/src/main/java/com/example/melanz_trans/application/event.java" );
+        Files.write(path, checkIt.getBytes());
+        System.out.println(checkIt);
+    }
+
+    private static void generateEventPublisherAbility(List<String> specText) throws IOException {
         var handler = new EventPublisherAbilityHandler(PROJECT_PATH, PACKAGE_NAME);
         var abilityText = handler.text();
         var checkIt = get(MiroTextNamespace.extractText(specText, "given", "when"))
