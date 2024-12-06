@@ -2,6 +2,7 @@ package pl.sycamore.filetransformer.spock;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CaseUtils;
+import org.example.Functor;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,12 +11,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static org.example.Functor.get;
 import static pl.sycamore.string.StringNamespace.splitListByText;
 
 public class TextFileIntoSpockSpecification {
-    public static List<Ability> abilities() {
-        return List.of();
-    }
+    private static final String GIVEN = "given";
+    private static final String WHEN = "when";
+    private static final String THEN = "then";
 
     public static Optional<SpockSpecification> transform(String packageName, Path filePath) {
         try {
@@ -26,23 +28,24 @@ public class TextFileIntoSpockSpecification {
                     .findFirst()
                     .map(it -> it.replace("Name: ", ""))
                     .map(it -> CaseUtils.toCamelCase(it, true, ' '))
+                    .map(it -> it + "Specification")
                     .orElseThrow();
 
             var gwtList = splitListByText(fileLines, "Spec: ").stream()
                     .map(specText -> {
-                        var given = extractGivenText()
-                                .andThen(generateGivenDescription())
-                                .apply(specText);
-                        var givenCodeBlock = extractGivenText()
-                                .andThen(generateGivenCodeBlock())
-                                .apply(specText);
+                        var given = get(MiroTextNamespace.extractText(specText, GIVEN, WHEN))
+                                .then(TextFileIntoSpockSpecification::generateGivenDescription)
+                                .value();
+                        var givenCodeBlock = get(MiroTextNamespace.extractText(specText, GIVEN, WHEN))
+                                .then(generateGivenCodeBlock())
+                                .value();
                         var when = "-";
-                        var then = extractThenText()
-                                .andThen(then())
-                                .apply(specText);
-                        var thenCodeBlock = extractThenText()
-                                .andThen(generateThenCodeBlock())
-                                .apply(specText);
+                        var then = get(MiroTextNamespace.extractText(specText, THEN))
+                                .then(TextFileIntoSpockSpecification::generateThenDescription)
+                                .value();
+                        var thenCodeBlock = get(MiroTextNamespace.extractText(specText, THEN))
+                                .then(generateThenCodeBlock())
+                                .value();
                         return new GivenWhenThen(given, givenCodeBlock, when, then, thenCodeBlock);
                     })
                     .toList();
@@ -53,27 +56,20 @@ public class TextFileIntoSpockSpecification {
         }
     }
 
-    private static Function<List<String>, String> generateGivenDescription() {
-        return givenText -> String.join(" and ", givenText);
+    private static String generateGivenDescription(List<String> givenText) {
+        return String.join(" and ", givenText);
     }
 
     private static Function<List<String>, List<String>> generateGivenCodeBlock() {
         return givenText -> givenText.stream()
                 .filter(t -> t.contains("event"))
                 .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
-                .map(JavaGeneratorNamespace.publishEventInEventPublisherAbility())
+                .map(JavaGeneratorNamespace::publishEventInEventPublisherAbility)
                 .toList();
     }
 
-    private static Function<List<String>, List<String>> extractGivenText() {
-        return it -> it.stream()
-                .skip(it.indexOf("given") + 1)
-                .limit(it.indexOf("when") - it.indexOf("given") - 1)
-                .toList();
-    }
-
-    private static Function<List<String>, String> then() {
-        return thenText -> String.join(" and ", thenText);
+    private static String generateThenDescription(List<String> thenText) {
+        return String.join(" and ", thenText);
     }
 
     private static Function<List<String>, List<String>> generateThenCodeBlock() {
@@ -81,12 +77,6 @@ public class TextFileIntoSpockSpecification {
                 .filter(t -> t.contains("event"))
                 .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
                 .map(SpockCodeBlockNamespace::eventOccurrenceAssertion)
-                .toList();
-    }
-
-    private static Function<List<String>, List<String>> extractThenText() {
-        return specText -> specText.stream()
-                .skip(specText.indexOf("then") + 1)
                 .toList();
     }
 }

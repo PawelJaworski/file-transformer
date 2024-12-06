@@ -1,5 +1,7 @@
 package pl.sycamore.string;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +10,7 @@ public final class StringNamespace {
     }
 
     public static String toSnakeCase(String s) {
-        return s.replaceAll(" ", "_")
+        return StringUtils.trimToEmpty(s).replaceAll(" ", "_")
                 .toLowerCase();
     }
 

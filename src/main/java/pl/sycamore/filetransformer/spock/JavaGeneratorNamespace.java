@@ -9,7 +9,17 @@ import java.util.function.Function;
 public final class JavaGeneratorNamespace {
     private JavaGeneratorNamespace() {}
 
-    public static Function<String, String> publishEventInEventPublisherAbility() {
-        return eventText -> String.format("%s()", StringNamespace.toSnakeCase(eventText));
+    public static String publishEventInEventPublisherAbility(String eventText) {
+        var methodName = StringNamespace.toSnakeCase(eventText);
+        var useCase = "Consumer<"
+                + CaseUtils.toCamelCase(eventText, true, ' ')
+                + "."
+                + CaseUtils.toCamelCase(eventText, true, ' ')
+                + "Builder> useCase";
+        return String.format("default void %s(%s) {}", methodName, useCase);
+    }
+
+    public static String relativePathFromPackage(String packageName) {
+        return packageName.replaceAll("\\.", "/");
     }
 }
