@@ -2,17 +2,18 @@ package org.example;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import pl.sycamore.filetransformer.code.MainJavaNamespace;
+import pl.sycamore.filetransformer.code.EventFileHandler;
 import pl.sycamore.filetransformer.code.TestJavaNamespace;
 import pl.sycamore.filetransformer.spock.*;
 
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.example.Functor.get;
+import static pl.sycamore.filetransformer.code.MainJavaNamespace.eventJavaCode;
+import static pl.sycamore.filetransformer.spock.JavaGeneratorNamespace.className;
 
 public class CodeGenerator {
     private static final String PROJECT_PATH = "/Users/paweljaworski/projects/github/melanz-trans";
@@ -50,8 +51,8 @@ public class CodeGenerator {
         System.out.println("Spock test generated at: " + outputFile.getAbsolutePath());
     }
 
-    private static void generateEvents(List<String> specText) throws IOException {
-        var checkIt = Stream.concat(
+    private static void generateEvents(List<String> specText) {
+        Stream.concat(
                 get(MiroTextNamespace.extractText(specText, "given", "when"))
                         .then(it -> MiroTextNamespace.findByTag(it, "event"))
                         .value().stream(),
@@ -59,12 +60,29 @@ public class CodeGenerator {
                         .then(it -> MiroTextNamespace.findByTag(it, "event"))
                         .value().stream()
         ).distinct()
-                .map(it -> MainJavaNamespace.event(it, PACKAGE_NAME + "/application/event"))
-                .toList().getFirst();
+                .forEach(it -> {
 
-        var path = Paths.get("/Users/paweljaworski/projects/github/melanz-trans/src/main/java/com/example/melanz_trans/application/event.java" );
-        Files.write(path, checkIt.getBytes());
-        System.out.println(checkIt);
+                    var javaFileName =  className(it);
+                    var eventJavaFile = new EventFileHandler(PROJECT_PATH, PACKAGE_NAME, javaFileName);
+                    if (eventJavaFile.isFileExists()) {
+                        System.out.println(eventJavaFile.path() + " already exists. Ignoring.");
+                        return;
+                    }
+
+                    System.out.println("Generating: " + eventJavaFile.path());
+                    var eventJavaCode = eventJavaCode(it, PACKAGE_NAME + ".application.event");
+                    try {
+                        eventJavaFile.write(eventJavaCode);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+//                    System.out.println(eventJavaCode);
+                });
+
+//        eventJavaFile.write(checkIt);
+//        var path = Paths.get("/Users/paweljaworski/projects/github/melanz-trans/src/main/java/com/example/melanz_trans/application/event.java" );
+//        Files.write(path, checkIt.getBytes());
+
     }
 
     private static void generateEventPublisherAbility(List<String> specText) throws IOException {
@@ -74,7 +92,7 @@ public class CodeGenerator {
                 .then(it -> MiroTextNamespace.findByTag(it, "event"))
                 .value().stream()
                 .reduce(abilityText, TestJavaNamespace::addEventPublishingIfNotExists, (f, s) -> s);
-        System.out.println(String.join("\n", checkIt));
+//        System.out.println(String.join("\n", checkIt));
         handler.write(String.join("\n", checkIt));
     }
 }

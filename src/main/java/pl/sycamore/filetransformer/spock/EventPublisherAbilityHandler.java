@@ -1,29 +1,17 @@
 package pl.sycamore.filetransformer.spock;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
+import pl.sycamore.filetransformer.common.AbstractFileHandler;
 
-public class EventPublisherAbilityHandler {
-    private final Path filePath;
+public class EventPublisherAbilityHandler extends AbstractFileHandler {
 
     public EventPublisherAbilityHandler(String projectPath, String packageName) {
-        this.filePath = Paths.get(projectPath
+        super(filePath(projectPath, packageName));
+    }
+
+    private static String filePath(String projectPath, String packageName) {
+        return projectPath
                 + "/src/test/java/"
                 + JavaGeneratorNamespace.relativePathFromPackage(packageName)
-                + "/application/event/EventPublisherAbility.java");
-
-    }
-
-    public List<String> text() throws IOException {
-        return Files.lines(filePath)
-                .collect(Collectors.toList());
-    }
-
-    public void write(String fileContent) throws IOException {
-        Files.write(filePath, fileContent.getBytes());
+                + "/application/event/EventPublisherAbility.java";
     }
 }

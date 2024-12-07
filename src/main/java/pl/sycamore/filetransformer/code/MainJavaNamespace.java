@@ -6,11 +6,11 @@ public final class MainJavaNamespace {
     private MainJavaNamespace() {
     }
 
-    public static String event(String eventText, String classPackage) {
+    public static String eventJavaCode(String eventText, String classPackage) {
         var className = CaseUtils.toCamelCase(eventText, true, ' ');
         var content =
         """
-        package $classPackage
+        package $classPackage;
         
         import lombok.Builder;
       
