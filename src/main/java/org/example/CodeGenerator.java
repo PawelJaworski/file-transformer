@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import static org.example.Functor.get;
 import static pl.sycamore.filetransformer.code.MainJavaNamespace.eventJavaCode;
 import static pl.sycamore.filetransformer.spock.JavaGeneratorNamespace.className;
+import static pl.sycamore.string.StringNamespace.splitListByText;
 
 public class CodeGenerator {
     private static final String PROJECT_PATH = "/Users/paweljaworski/projects/github/melanz-trans";
@@ -34,8 +35,11 @@ public class CodeGenerator {
     public static void main(String[] args) throws Exception {
         var specText = Files.lines(Paths.get(INPUT_FILE_PATH))
                 .toList();
-        generateEvents(specText);
-        generateEventPublisherAbility(specText);
+        for (var it : splitListByText(specText, "Spec: ")) {
+            generateEvents(it);
+            generateEventPublisherAbility(it);
+        };
+
         generateSpockSpec(specText);
 
     }
@@ -77,12 +81,19 @@ public class CodeGenerator {
     private static void generateEventPublisherAbility(List<String> specText) throws IOException {
         var handler = new EventPublisherAbilityHandler(PROJECT_PATH, PACKAGE_NAME);
         var abilityText = handler.text();
-        var checkIt = get(MiroTextNamespace.extractText(specText, "given", "when"))
+        var eventPublishing = get(MiroTextNamespace.extractText(specText, "given", "when"))
                 .then(it -> MiroTextNamespace.findByTag(it, "event"))
                 .value().stream()
                 .reduce(abilityText, TestJavaNamespace::addEventPublishingIfNotExists, (f, s) -> s);
 //        System.out.println(String.join("\n", checkIt));
-        handler.write(String.join("\n", checkIt));
+        handler.write(String.join("\n", eventPublishing));
+
+        var eventAssertions = get(MiroTextNamespace.extractText(specText, "then"))
+                .then(it -> MiroTextNamespace.findByTag(it, "event"))
+                .value().stream()
+                .reduce(abilityText, TestJavaNamespace::addEventOccurredAssertionIfNotExists, (f, s) -> s);
+//        System.out.println(String.join("\n", checkIt));
+        handler.write(String.join("\n", eventAssertions));
     }
 
     private static void generateSpockSpec(List<String> specText) throws IOException, TemplateException {

@@ -37,14 +37,13 @@ public class TextFileIntoSpockSpecification {
                     var givenCodeBlock = get(MiroTextNamespace.extractText(specText, GIVEN, WHEN))
                             .then(generateGivenCodeBlock())
                             .value();
-                    var when = "-";
                     var then = get(MiroTextNamespace.extractText(specText, THEN))
                             .then(TextFileIntoSpockSpecification::generateThenDescription)
                             .value();
                     var thenCodeBlock = get(MiroTextNamespace.extractText(specText, THEN))
                             .then(generateThenCodeBlock())
                             .value();
-                    return new GivenWhenThen(given, givenCodeBlock, when, then, thenCodeBlock);
+                    return new GivenWhenThen(given, givenCodeBlock, null, then, thenCodeBlock);
                 })
                 .toList();
         return Optional.of(new SpockSpecification(packageName, className, gwtList));

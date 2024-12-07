@@ -9,6 +9,20 @@ import java.util.List;
 public final class TestJavaNamespace {
     private TestJavaNamespace() {}
 
+    public static List<String> addEventOccurredAssertionIfNotExists(List<String> abilityCodeBlock, String event) {
+        var endIdx = abilityCodeBlock.stream()
+                .map(StringUtils::trimToEmpty)
+                .toList()
+                .lastIndexOf("}");
+        var eventCode = JavaGeneratorNamespace.assertEventOccurredPublisherAbility(event);
+        if (abilityCodeBlock.stream().anyMatch(it -> it.contains(StringNamespace.toSnakeCase("assert_" +event)))) {
+            System.out.println("Ability method already exists " + eventCode);
+            return abilityCodeBlock;
+        }
+        abilityCodeBlock.add(endIdx, "    " + eventCode);
+        return abilityCodeBlock;
+    }
+
     public static List<String> addEventPublishingIfNotExists(List<String> abilityCodeBlock, String event) {
         var endIdx = abilityCodeBlock.stream()
                 .map(StringUtils::trimToEmpty)
@@ -16,6 +30,7 @@ public final class TestJavaNamespace {
                 .lastIndexOf("}");
         var eventCode = JavaGeneratorNamespace.publishEventInEventPublisherAbility(event);
         if (abilityCodeBlock.stream().anyMatch(it -> it.contains(StringNamespace.toSnakeCase(event)))) {
+            System.out.println("Ability method already exists " + eventCode);
             return abilityCodeBlock;
         }
         abilityCodeBlock.add(endIdx, "    " + eventCode);

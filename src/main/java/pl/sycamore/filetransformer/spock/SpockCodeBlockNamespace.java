@@ -1,6 +1,7 @@
 package pl.sycamore.filetransformer.spock;
 
 import org.apache.commons.text.CaseUtils;
+import pl.sycamore.string.StringNamespace;
 
 final class SpockCodeBlockNamespace {
     private SpockCodeBlockNamespace() {}
@@ -10,6 +11,6 @@ final class SpockCodeBlockNamespace {
     }
 
     static String eventOccurrenceAssertion(String eventName) {
-        return String.format("assert_event_occurred(new %s())", CaseUtils.toCamelCase(eventName, true, ' '));
+        return String.format("assert_%s {}", StringNamespace.toSnakeCase(eventName));
     }
 }
