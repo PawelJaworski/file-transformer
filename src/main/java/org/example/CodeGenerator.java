@@ -2,6 +2,7 @@ package org.example;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import pl.sycamore.filetransformer.code.EventFileHandler;
 import pl.sycamore.filetransformer.code.TestJavaNamespace;
 import pl.sycamore.filetransformer.spock.*;
@@ -18,37 +19,25 @@ import static pl.sycamore.filetransformer.spock.JavaGeneratorNamespace.className
 public class CodeGenerator {
     private static final String PROJECT_PATH = "/Users/paweljaworski/projects/github/melanz-trans";
     private static final String PACKAGE_NAME = "com.example.melanz_trans";
+    private static final String INPUT_FILE_PATH = "src/main/resources/spockSpecification.txt";
+    private static final Configuration FREEMARKER_CONFIG = new Configuration(Configuration.VERSION_2_3_31);
+
+    static {
+        try {
+            FREEMARKER_CONFIG.setDirectoryForTemplateLoading(new File("src/main/resources/templates"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        FREEMARKER_CONFIG.setDefaultEncoding("UTF-8");
+    }
 
     public static void main(String[] args) throws Exception {
-        String inputFilePath = "src/main/resources/spockSpecification.txt";
-
-        // Initialize Freemarker configuration
-        Configuration cfg = new Configuration(Configuration.VERSION_2_3_31);
-        cfg.setDirectoryForTemplateLoading(new File("src/main/resources/templates"));
-        cfg.setDefaultEncoding("UTF-8");
-
-        // Load the template
-        Template template = cfg.getTemplate("spockSpecification.ftl");
-
-        // Generate output file
-        Map<String, SpockSpecification> templateData = new HashMap<>();
-
-        var specText = Files.lines(Paths.get(inputFilePath))
+        var specText = Files.lines(Paths.get(INPUT_FILE_PATH))
                 .toList();
         generateEvents(specText);
         generateEventPublisherAbility(specText);
+        generateSpockSpec(specText);
 
-        TextFileIntoSpockSpecification.transform(PACKAGE_NAME, Paths.get(inputFilePath))
-                .ifPresent(it -> templateData.put("spec", it));
-
-        var generatedDirectory = PROJECT_PATH + "/src/test/groovy/" + PACKAGE_NAME.replaceAll("\\.", "/") + "/";
-        Files.createDirectories(Paths.get(generatedDirectory));
-        File outputFile = new File(generatedDirectory + templateData.get("spec").className() + ".groovy");
-        try (Writer writer = new FileWriter(outputFile)) {
-            template.process(templateData, writer);
-        }
-
-        System.out.println("Spock test generated at: " + outputFile.getAbsolutePath());
     }
 
     private static void generateEvents(List<String> specText) {
@@ -94,6 +83,22 @@ public class CodeGenerator {
                 .reduce(abilityText, TestJavaNamespace::addEventPublishingIfNotExists, (f, s) -> s);
 //        System.out.println(String.join("\n", checkIt));
         handler.write(String.join("\n", checkIt));
+    }
+
+    private static void generateSpockSpec(List<String> specText) throws IOException, TemplateException {
+        Map<String, SpockSpecification> templateData = new HashMap<>();
+        TextFileIntoSpockSpecification.transform(PACKAGE_NAME, specText)
+                .ifPresent(it -> templateData.put("spec", it));
+
+        var generatedDirectory = PROJECT_PATH + "/src/test/groovy/" + PACKAGE_NAME.replaceAll("\\.", "/") + "/";
+        Files.createDirectories(Paths.get(generatedDirectory));
+        File outputFile = new File(generatedDirectory + templateData.get("spec").className() + ".groovy");
+        Template template = FREEMARKER_CONFIG.getTemplate("spockSpecification.ftl");
+        try (Writer writer = new FileWriter(outputFile)) {
+            template.process(templateData, writer);
+        }
+
+        System.out.println("Spock test generated at: " + outputFile.getAbsolutePath());
     }
 }
 
