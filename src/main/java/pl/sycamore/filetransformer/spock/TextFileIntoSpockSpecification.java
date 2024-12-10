@@ -52,7 +52,7 @@ public class TextFileIntoSpockSpecification {
     private static String generateGivenDescription(List<String> givenText) {
         var description = givenText.stream()
                 .map(StringUtils::trimToEmpty)
-                .map(it -> it.replace("[event]", ""))
+                .map(it -> it.replace("<<event>>", ""))
                 .toList();
         return String.join("and ", description);
     }
@@ -60,7 +60,7 @@ public class TextFileIntoSpockSpecification {
     private static Function<List<String>, List<String>> generateGivenCodeBlock() {
         return givenText -> givenText.stream()
                 .filter(t -> t.contains("event"))
-                .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
+                .map(t -> StringUtils.trimToEmpty(t.replace("<<event>>", "")))
                 .map(GroovyGeneratorNamespace::eventOccurredCodeBlock)
                 .toList();
     }
@@ -72,7 +72,7 @@ public class TextFileIntoSpockSpecification {
     private static Function<List<String>, List<String>> generateThenCodeBlock() {
         return thenText -> thenText.stream()
                 .filter(t -> t.contains("event"))
-                .map(t -> StringUtils.trimToEmpty(t.replace("[event]", "")))
+                .map(t -> StringUtils.trimToEmpty(t.replace("<<event>>", "")))
                 .map(SpockCodeBlockNamespace::eventOccurrenceAssertion)
                 .toList();
     }

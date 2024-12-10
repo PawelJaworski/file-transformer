@@ -3,6 +3,7 @@ package org.example;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import org.apache.commons.lang3.StringUtils;
 import pl.sycamore.filetransformer.code.EventFileHandler;
 import pl.sycamore.filetransformer.code.TestJavaNamespace;
 import pl.sycamore.filetransformer.spock.*;
@@ -37,7 +38,10 @@ public class CodeGenerator {
                 get(MiroTextNamespace.extractText(specText, "then"))
                         .then(it -> MiroTextNamespace.findByTag(it, "event"))
                         .value().stream()
-        ).distinct()
+        ).map(it -> it.replaceAll(StringUtils.trimToEmpty(StringUtils.substringBetween(it, "{", "}")), "")
+                        .replace("{", "")
+                        .replace("}", ""))
+                .distinct()
                 .forEach(it -> {
 
                     var javaFileName =  className(it);
@@ -69,6 +73,7 @@ public class CodeGenerator {
         var eventPublishing = get(MiroTextNamespace.extractText(specText, "given", "when"))
                 .then(it -> MiroTextNamespace.findByTag(it, "event"))
                 .value().stream()
+                .map(CodeGenerator::eventName)
                 .reduce(abilityText, TestJavaNamespace::addEventPublishingIfNotExists, (f, s) -> s);
 
         handler.write(String.join("\n", eventPublishing));
@@ -76,8 +81,15 @@ public class CodeGenerator {
         var eventAssertions = get(MiroTextNamespace.extractText(specText, "then"))
                 .then(it -> MiroTextNamespace.findByTag(it, "event"))
                 .value().stream()
+                .map(CodeGenerator::eventName)
                 .reduce(abilityText, TestJavaNamespace::addEventOccurredAssertionIfNotExists, (f, s) -> s);
         handler.write(String.join("\n", eventAssertions));
+    }
+
+    private static String eventName(String eventText) {
+        return eventText.replaceAll(StringUtils.trimToEmpty(StringUtils.substringBetween(eventText, "{", "}")), "")
+                .replace("{", "")
+                .replace("}", "");
     }
 }
 

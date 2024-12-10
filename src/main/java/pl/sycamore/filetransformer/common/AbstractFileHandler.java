@@ -1,9 +1,7 @@
 package pl.sycamore.filetransformer.common;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +23,7 @@ public abstract class AbstractFileHandler {
     }
 
     public void write(String fileContent) throws IOException {
-        Files.write(filePath, fileContent.getBytes());
+        Files.write(filePath, fileContent.getBytes(), StandardOpenOption.CREATE);
     }
 
     public Path path() {

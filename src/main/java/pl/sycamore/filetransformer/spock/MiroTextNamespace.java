@@ -20,8 +20,8 @@ public final class MiroTextNamespace {
 
     public static List<String> findByTag(List<String> text, String tag) {
         return text.stream()
-                .filter(it -> it.contains("[" + tag + "]"))
-                .map(it -> it.replaceAll("\\[" + tag + "\\]", ""))
+                .filter(it -> it.contains("<<" + tag + ">>"))
+                .map(it -> it.replaceAll("<<" + tag + ">>", ""))
                 .toList();
     }
 }
