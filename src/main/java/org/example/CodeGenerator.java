@@ -13,24 +13,12 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static org.example.Functor.get;
+import static org.example.GeneratorConfig.*;
 import static pl.sycamore.filetransformer.code.MainJavaNamespace.eventJavaCode;
 import static pl.sycamore.filetransformer.spock.JavaGeneratorNamespace.className;
 import static pl.sycamore.string.StringNamespace.splitListByText;
 
 public class CodeGenerator {
-    private static final String PROJECT_PATH = "/Users/paweljaworski/projects/github/melanz-trans";
-    private static final String PACKAGE_NAME = "com.example.melanz_trans";
-    private static final String INPUT_FILE_PATH = "src/main/resources/spockSpecification.txt";
-    private static final Configuration FREEMARKER_CONFIG = new Configuration(Configuration.VERSION_2_3_31);
-
-    static {
-        try {
-            FREEMARKER_CONFIG.setDirectoryForTemplateLoading(new File("src/main/resources/templates"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        FREEMARKER_CONFIG.setDefaultEncoding("UTF-8");
-    }
 
     public static void main(String[] args) throws Exception {
         var specText = Files.lines(Paths.get(INPUT_FILE_PATH))
@@ -39,9 +27,6 @@ public class CodeGenerator {
             generateEvents(it);
             generateEventPublisherAbility(it);
         };
-
-        generateSpockSpec(specText);
-
     }
 
     private static void generateEvents(List<String> specText) {
@@ -85,31 +70,14 @@ public class CodeGenerator {
                 .then(it -> MiroTextNamespace.findByTag(it, "event"))
                 .value().stream()
                 .reduce(abilityText, TestJavaNamespace::addEventPublishingIfNotExists, (f, s) -> s);
-//        System.out.println(String.join("\n", checkIt));
+
         handler.write(String.join("\n", eventPublishing));
 
         var eventAssertions = get(MiroTextNamespace.extractText(specText, "then"))
                 .then(it -> MiroTextNamespace.findByTag(it, "event"))
                 .value().stream()
                 .reduce(abilityText, TestJavaNamespace::addEventOccurredAssertionIfNotExists, (f, s) -> s);
-//        System.out.println(String.join("\n", checkIt));
         handler.write(String.join("\n", eventAssertions));
-    }
-
-    private static void generateSpockSpec(List<String> specText) throws IOException, TemplateException {
-        Map<String, SpockSpecification> templateData = new HashMap<>();
-        TextFileIntoSpockSpecification.transform(PACKAGE_NAME, specText)
-                .ifPresent(it -> templateData.put("spec", it));
-
-        var generatedDirectory = PROJECT_PATH + "/src/test/groovy/" + PACKAGE_NAME.replaceAll("\\.", "/") + "/";
-        Files.createDirectories(Paths.get(generatedDirectory));
-        File outputFile = new File(generatedDirectory + templateData.get("spec").className() + ".groovy");
-        Template template = FREEMARKER_CONFIG.getTemplate("spockSpecification.ftl");
-        try (Writer writer = new FileWriter(outputFile)) {
-            template.process(templateData, writer);
-        }
-
-        System.out.println("Spock test generated at: " + outputFile.getAbsolutePath());
     }
 }
 
