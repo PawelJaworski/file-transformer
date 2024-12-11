@@ -1,7 +1,6 @@
 package pl.sycamore.filetransformer.code;
 
 import org.apache.commons.text.CaseUtils;
-import pl.sycamore.string.StringNamespace;
 
 public final class MainJavaNamespace {
     private MainJavaNamespace() {
@@ -11,8 +10,7 @@ public final class MainJavaNamespace {
         return CaseUtils.toCamelCase(text, true, ' ');
     }
 
-    public static String eventJavaCode(String eventText, String classPackage) {
-        var className = CaseUtils.toCamelCase(eventText, true, ' ');
+    public static String recordClass(String className, String classPackage) {
         var content =
         """
         package $classPackage;

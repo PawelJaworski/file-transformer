@@ -3,6 +3,7 @@ package org.example;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.apache.commons.lang3.StringUtils;
+import pl.sycamore.filetransformer.code.CommandFileHandler;
 import pl.sycamore.filetransformer.code.CommandModel;
 import pl.sycamore.filetransformer.code.EventFileHandler;
 import pl.sycamore.filetransformer.code.TestJavaNamespace;
@@ -15,7 +16,7 @@ import java.util.stream.Stream;
 
 import static org.example.Functor.get;
 import static org.example.GeneratorConfig.*;
-import static pl.sycamore.filetransformer.code.MainJavaNamespace.eventJavaCode;
+import static pl.sycamore.filetransformer.code.MainJavaNamespace.recordClass;
 import static pl.sycamore.filetransformer.spock.JavaGeneratorNamespace.className;
 
 public class CodeGenerator {
@@ -41,15 +42,15 @@ public class CodeGenerator {
                 .distinct()
                 .forEach(it -> {
 
-                    var javaFileName =  className(it);
-                    var eventJavaFile = new EventFileHandler(PROJECT_PATH, PACKAGE_NAME, javaFileName);
+                    var className =  className( MiroTextNamespace.removeJson(it) );
+                    var eventJavaFile = new EventFileHandler(PROJECT_PATH, PACKAGE_NAME, className);
                     if (eventJavaFile.isFileExists()) {
                         System.out.println(eventJavaFile.path() + " already exists. Ignoring.");
                         return;
                     }
 
                     System.out.println("Generating: " + eventJavaFile.path());
-                    var eventJavaCode = eventJavaCode(it, PACKAGE_NAME + ".application.event");
+                    var eventJavaCode = recordClass(className, PACKAGE_NAME + ".application.event");
                     try {
                         eventJavaFile.write(eventJavaCode);
                     } catch (IOException e) {
@@ -61,23 +62,16 @@ public class CodeGenerator {
     private static void generateCommands(List<String> useCaseText) throws IOException, TemplateException {
 
         for (var cmdTxt : MiroTextNamespace.findByTag(useCaseText, "command")) {
+            var className =  className( MiroTextNamespace.removeJson(cmdTxt) ) + "Cmd";
+            var eventJavaFile = new CommandFileHandler(PROJECT_PATH, PACKAGE_NAME, className);
+            if (eventJavaFile.isFileExists()) {
+                System.out.println(eventJavaFile.path() + " already exists. Ignoring.");
+                return;
+            }
 
-                    var packageName = PACKAGE_NAME + ".application.cmd";
-                    var className = className( MiroTextNamespace.removeJson(cmdTxt) ) + "Cmd";
-
-                    var cmd = new CommandModel(packageName, className);
-
-                    var templateData = Map.of("command", cmd);
-                    var generatedDirectory = PROJECT_PATH
-                            + "/src/main/java/"
-                            + PACKAGE_NAME.replaceAll("\\.", "/") +
-                            "/application/cmd/";
-                    Files.createDirectories(Paths.get(generatedDirectory));
-                    File outputFile = new File(generatedDirectory + cmd.className() + ".java");
-                    Template template = FREEMARKER_CONFIG.getTemplate("command.ftl");
-                    try (Writer writer = new FileWriter(outputFile)) {
-                        template.process(templateData, writer);
-                    }
+            System.out.println("Generating: " + eventJavaFile.path());
+            var eventJavaCode = recordClass( className, PACKAGE_NAME + ".application.cmd");
+            eventJavaFile.write(eventJavaCode);
         };
     }
 
