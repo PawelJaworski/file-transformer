@@ -3,4 +3,4 @@ given
 <<command>> propose event   { eventDescription: Wigilia firmowa eventDate: 2024-12-12 }
 when
 then
-<<event>> propose event   { eventDescription: Wigilia firmowa eventDate: 2024-12-12 }
+<<event>> event proposed   { eventDescription: Wigilia firmowa eventDate: 2024-12-12 }

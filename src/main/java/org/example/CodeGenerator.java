@@ -1,9 +1,9 @@
 package org.example;
 
-import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.apache.commons.lang3.StringUtils;
+import pl.sycamore.filetransformer.code.CommandModel;
 import pl.sycamore.filetransformer.code.EventFileHandler;
 import pl.sycamore.filetransformer.code.TestJavaNamespace;
 import pl.sycamore.filetransformer.spock.*;
@@ -17,17 +17,16 @@ import static org.example.Functor.get;
 import static org.example.GeneratorConfig.*;
 import static pl.sycamore.filetransformer.code.MainJavaNamespace.eventJavaCode;
 import static pl.sycamore.filetransformer.spock.JavaGeneratorNamespace.className;
-import static pl.sycamore.string.StringNamespace.splitListByText;
 
 public class CodeGenerator {
+    private static String USE_CASE_TEMPLATE_PATH = "src/main/resources/useCase.txt";
 
     public static void main(String[] args) throws Exception {
-        var specText = Files.lines(Paths.get(INPUT_FILE_PATH))
+        var useCaseText = Files.lines(Paths.get(USE_CASE_TEMPLATE_PATH))
                 .toList();
-        for (var it : splitListByText(specText, "Spec: ")) {
-            generateEvents(it);
-            generateEventPublisherAbility(it);
-        };
+        generateEvents(useCaseText);
+        generateCommands(useCaseText);
+//        generateEventPublisherAbility(useCaseText);
     }
 
     private static void generateEvents(List<String> specText) {
@@ -38,9 +37,7 @@ public class CodeGenerator {
                 get(MiroTextNamespace.extractText(specText, "then"))
                         .then(it -> MiroTextNamespace.findByTag(it, "event"))
                         .value().stream()
-        ).map(it -> it.replaceAll(StringUtils.trimToEmpty(StringUtils.substringBetween(it, "{", "}")), "")
-                        .replace("{", "")
-                        .replace("}", ""))
+        ).map(MiroTextNamespace::removeJson)
                 .distinct()
                 .forEach(it -> {
 
@@ -58,13 +55,30 @@ public class CodeGenerator {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-//                    System.out.println(eventJavaCode);
                 });
+    }
 
-//        eventJavaFile.write(checkIt);
-//        var path = Paths.get("/Users/paweljaworski/projects/github/melanz-trans/src/main/java/com/example/melanz_trans/application/event.java" );
-//        Files.write(path, checkIt.getBytes());
+    private static void generateCommands(List<String> useCaseText) throws IOException, TemplateException {
 
+        for (var cmdTxt : MiroTextNamespace.findByTag(useCaseText, "command")) {
+
+                    var packageName = PACKAGE_NAME + ".application.cmd";
+                    var className = className( MiroTextNamespace.removeJson(cmdTxt) ) + "Cmd";
+
+                    var cmd = new CommandModel(packageName, className);
+
+                    var templateData = Map.of("command", cmd);
+                    var generatedDirectory = PROJECT_PATH
+                            + "/src/main/java/"
+                            + PACKAGE_NAME.replaceAll("\\.", "/") +
+                            "/application/cmd/";
+                    Files.createDirectories(Paths.get(generatedDirectory));
+                    File outputFile = new File(generatedDirectory + cmd.className() + ".java");
+                    Template template = FREEMARKER_CONFIG.getTemplate("command.ftl");
+                    try (Writer writer = new FileWriter(outputFile)) {
+                        template.process(templateData, writer);
+                    }
+        };
     }
 
     private static void generateEventPublisherAbility(List<String> specText) throws IOException {
