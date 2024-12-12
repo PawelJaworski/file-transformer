@@ -10,10 +10,10 @@ public class EventFileHandler extends AbstractFileHandler {
     }
 
     private static String filePath(String projectPath, String packageName, String fileName) {
+        var codePackage = CodePackage.fromPackageName(String.format("%s.application.event", packageName));
         return projectPath
-                + "/src/main/java/"
-                + JavaGeneratorNamespace.relativePathFromPackage(packageName)
-                + "/application/event/"
+                + codePackage.mainJavaPath()
+                + "/"
                 + fileName
                 + ".java";
     }
