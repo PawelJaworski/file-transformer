@@ -1,8 +1,8 @@
-UseCase: Propose event
+Slice: Propose event
 
 Wigilia firmowa
 2024-12-12
 
-<<command>> propose event   { eventDescription: text eventDate: date }
+<<command>> propose event type   { eventType: text }
 
-<<event>> event proposed   { eventDescription: text eventDate: date }
+<<event>> event type proposed   { eventType: text }
