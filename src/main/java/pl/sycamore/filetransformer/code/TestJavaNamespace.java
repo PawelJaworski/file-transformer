@@ -15,7 +15,7 @@ public final class TestJavaNamespace {
                 .toList()
                 .lastIndexOf("}");
         var eventCode = JavaGeneratorNamespace.assertEventOccurredPublisherAbility(event);
-        if (abilityCodeBlock.stream().anyMatch(it -> it.contains(StringNamespace.toSnakeCase("assert_" +event)))) {
+        if (abilityCodeBlock.stream().anyMatch(it -> it.contains( "assert_" + StringNamespace.toSnakeCase(event) ))) {
             System.out.println("Ability method already exists " + eventCode);
             return abilityCodeBlock;
         }

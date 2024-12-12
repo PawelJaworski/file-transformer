@@ -22,6 +22,16 @@ public abstract class AbstractFileHandler {
                 .collect(Collectors.toList());
     }
 
+    public void writeNewFileElseLogAlreadyExists(String fileContent) throws IOException {
+        if (isFileExists()) {
+            System.out.println(filePath + " already exists. Ignoring.");
+            return;
+        }
+        System.out.println("Generating: " + filePath);
+
+        write(fileContent);
+    }
+
     public void write(String fileContent) throws IOException {
         Files.write(filePath, fileContent.getBytes(), StandardOpenOption.CREATE);
     }

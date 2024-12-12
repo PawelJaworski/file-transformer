@@ -1,10 +1,7 @@
 package org.example;
 
-import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import org.apache.commons.lang3.StringUtils;
 import pl.sycamore.filetransformer.code.CommandFileHandler;
-import pl.sycamore.filetransformer.code.CommandModel;
 import pl.sycamore.filetransformer.code.EventFileHandler;
 import pl.sycamore.filetransformer.code.TestJavaNamespace;
 import pl.sycamore.filetransformer.spock.*;
@@ -27,11 +24,11 @@ public class CodeGenerator {
                 .toList();
         generateEvents(useCaseText);
         generateCommands(useCaseText);
-//        generateEventPublisherAbility(useCaseText);
+        generateEventPublisherAbility(useCaseText);
     }
 
-    private static void generateEvents(List<String> specText) {
-        Stream.concat(
+    private static void generateEvents(List<String> specText) throws IOException {
+        var events = Stream.concat(
                 get(MiroTextNamespace.extractText(specText, "given", "when"))
                         .then(it -> MiroTextNamespace.findByTag(it, "event"))
                         .value().stream(),
@@ -40,38 +37,22 @@ public class CodeGenerator {
                         .value().stream()
         ).map(MiroTextNamespace::removeJson)
                 .distinct()
-                .forEach(it -> {
-
-                    var className =  className( MiroTextNamespace.removeJson(it) );
-                    var eventJavaFile = new EventFileHandler(PROJECT_PATH, PACKAGE_NAME, className);
-                    if (eventJavaFile.isFileExists()) {
-                        System.out.println(eventJavaFile.path() + " already exists. Ignoring.");
-                        return;
-                    }
-
-                    System.out.println("Generating: " + eventJavaFile.path());
-                    var eventJavaCode = recordClass(className, PACKAGE_NAME + ".application.event");
-                    try {
-                        eventJavaFile.write(eventJavaCode);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                .toList();
+        for (var eventTxt : events) {
+            var className = className(MiroTextNamespace.removeJson(eventTxt));
+            var eventJavaFile = new EventFileHandler(PROJECT_PATH, PACKAGE_NAME, className);
+            var eventJavaCode = recordClass(className, PACKAGE_NAME + ".application.event");
+            eventJavaFile.writeNewFileElseLogAlreadyExists(eventJavaCode);
+        }
     }
 
-    private static void generateCommands(List<String> useCaseText) throws IOException, TemplateException {
+    private static void generateCommands(List<String> useCaseText) throws IOException {
 
         for (var cmdTxt : MiroTextNamespace.findByTag(useCaseText, "command")) {
             var className =  className( MiroTextNamespace.removeJson(cmdTxt) ) + "Cmd";
             var eventJavaFile = new CommandFileHandler(PROJECT_PATH, PACKAGE_NAME, className);
-            if (eventJavaFile.isFileExists()) {
-                System.out.println(eventJavaFile.path() + " already exists. Ignoring.");
-                return;
-            }
-
-            System.out.println("Generating: " + eventJavaFile.path());
             var eventJavaCode = recordClass( className, PACKAGE_NAME + ".application.cmd");
-            eventJavaFile.write(eventJavaCode);
+            eventJavaFile.writeNewFileElseLogAlreadyExists(eventJavaCode);
         };
     }
 
