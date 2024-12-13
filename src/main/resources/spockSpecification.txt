@@ -1,6 +1,6 @@
 Spec: propose event
 given
-<<command>> propose event   { eventDescription: Wigilia firmowa eventDate: 2024-12-12 }
 when
+<<command>> propose event   { eventDescription: Wigilia firmowa eventDate: 2024-12-12 }
 then
-<<event>> event proposed   { eventDescription: Wigilia firmowa eventDate: 2024-12-12 }
+<<event>> event type proposed   { eventDescription: Wigilia firmowa eventDate: 2024-12-12 }

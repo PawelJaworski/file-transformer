@@ -1,12 +1,8 @@
 package pl.sycamore.filetransformer.spock;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.CaseUtils;
-import org.example.Functor;
+import org.example.GeneratorConfig;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -21,38 +17,37 @@ public class TextFileIntoSpockSpecification {
 
     public static Optional<SpockSpecification> transform(String packageName, List<String> fileLines) {
 
-        var className = fileLines.stream()
-                .filter(it -> it.contains("Name: "))
-                .findFirst()
-                .map(it -> it.replace("Name: ", ""))
-                .map(it -> CaseUtils.toCamelCase(it, true, ' '))
-                .map(it -> it + "Specification")
-                .orElseThrow();
+        var className = GroovyGeneratorNamespace.className(GeneratorConfig.USE_CASE).concat("Specification");
 
         var gwtList = splitListByText(fileLines, "Spec: ").stream()
                 .map(specText -> {
                     var given = get(MiroTextNamespace.extractText(specText, GIVEN, WHEN))
-                            .then(TextFileIntoSpockSpecification::generateGivenDescription)
+                            .then(TextFileIntoSpockSpecification::generateGivenOrThenDescription)
                             .value();
                     var givenCodeBlock = get(MiroTextNamespace.extractText(specText, GIVEN, WHEN))
                             .then(generateGivenCodeBlock())
                             .value();
+                    var when = get(MiroTextNamespace.extractText(specText, WHEN, THEN))
+                            .then(TextFileIntoSpockSpecification::generateGivenOrThenDescription)
+                            .value();
+                    var whenCodeBlock = List.of("true");
                     var then = get(MiroTextNamespace.extractText(specText, THEN))
-                            .then(TextFileIntoSpockSpecification::generateThenDescription)
+                            .then(TextFileIntoSpockSpecification::generateGivenOrThenDescription)
                             .value();
                     var thenCodeBlock = get(MiroTextNamespace.extractText(specText, THEN))
-                            .then(generateThenCodeBlock())
+                            .then(TextFileIntoSpockSpecification::generateThenCodeBlock)
                             .value();
-                    return new GivenWhenThen(given, givenCodeBlock, null, then, thenCodeBlock);
+                    return new GivenWhenThen(given, givenCodeBlock, when, whenCodeBlock, then, thenCodeBlock);
                 })
                 .toList();
         return Optional.of(new SpockSpecification(packageName, className, gwtList));
     }
 
-    private static String generateGivenDescription(List<String> givenText) {
+    private static String generateGivenOrThenDescription(List<String> givenText) {
         var description = givenText.stream()
+                .map(MiroTextNamespace::removeJson)
+                .map(MiroTextNamespace::removeTags)
                 .map(StringUtils::trimToEmpty)
-                .map(it -> it.replace("<<event>>", ""))
                 .toList();
         return String.join("and ", description);
     }
@@ -65,14 +60,11 @@ public class TextFileIntoSpockSpecification {
                 .toList();
     }
 
-    private static String generateThenDescription(List<String> thenText) {
-        return String.join(" and ", thenText);
-    }
-
-    private static Function<List<String>, List<String>> generateThenCodeBlock() {
-        return thenText -> thenText.stream()
-                .filter(t -> t.contains("event"))
-                .map(t -> StringUtils.trimToEmpty(t.replace("<<event>>", "")))
+    private static List<String> generateThenCodeBlock(List<String> thenText) {
+        return thenText.stream()
+                .filter(t -> t.contains("<<event>>"))
+                .map(MiroTextNamespace::removeJson)
+                .map(MiroTextNamespace::removeTags)
                 .map(SpockCodeBlockNamespace::eventOccurrenceAssertion)
                 .toList();
     }
