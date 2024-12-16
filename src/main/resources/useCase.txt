@@ -1,8 +1,8 @@
-Slice: Propose event
+Copy of Slice: Propose date of event
 
 Wigilia firmowa
 2024-12-12
 
-<<command>> propose event type   { eventType: text }
+<<command>> propose date of event   { date: date }
 
-<<event>> event type proposed   { eventType: text }
+<<event>> date of event proposed   { date: date }

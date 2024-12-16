@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.IOException;
 
 public final class GeneratorConfig {
-    public static final String USE_CASE = "propose event";
+    public static final String USE_CASE = "propose date of event";
     public static final String PROJECT_PATH = "/Users/paweljaworski/projects/github/ralt-lab";
     public static final String PACKAGE_NAME = "com.schenker.ralt.integration_event";
     public static final String INPUT_FILE_PATH = "src/main/resources/spockSpecification.txt";
