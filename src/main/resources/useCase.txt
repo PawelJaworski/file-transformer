@@ -1,6 +1,5 @@
-Copy of Slice: Propose date of event
+Use case: Propose date of event
 
-Wigilia firmowa
 2024-12-12
 
 <<command>> propose date of event   { date: date }

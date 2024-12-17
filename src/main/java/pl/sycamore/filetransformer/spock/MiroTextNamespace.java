@@ -7,12 +7,16 @@ import java.util.List;
 public final class MiroTextNamespace {
     private static final String COMMAND_TAG = "<<command>>";
     private static final String EVENT_TAG = "<<event>>";
+    private static final String COMMENT_TAG = "<<comment>>";
+    private static final String VIEW_TAG = "<<view>>";
 
     private MiroTextNamespace() {}
 
     public static String removeTags(String text) {
         return text.replace(COMMAND_TAG, "")
-                .replace(EVENT_TAG, "");
+                .replace(EVENT_TAG, "")
+                .replace(COMMENT_TAG, "")
+                .replace(VIEW_TAG, "");
     }
 
     public static String removeJson(String text) {

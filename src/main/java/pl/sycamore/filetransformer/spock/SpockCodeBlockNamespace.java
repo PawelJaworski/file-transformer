@@ -13,4 +13,8 @@ final class SpockCodeBlockNamespace {
     static String eventOccurrenceAssertion(String eventName) {
         return String.format("assert_%s {}", StringNamespace.toSnakeCase(eventName));
     }
+
+    static String comment(String text) {
+        return String.format("// %s", text);
+    }
 }

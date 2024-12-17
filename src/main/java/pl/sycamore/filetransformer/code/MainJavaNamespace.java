@@ -23,4 +23,38 @@ public final class MainJavaNamespace {
 
         return content.replace("$classPackage", classPackage).replace("$className", className);
     }
+
+    public static String entity(String className, String classPackage) {
+        var content =
+                """
+                package $classPackage;
+                
+                import jakarta.persistence.*;
+              
+                @Entity
+                public class $classNameEntity {
+                    @Id
+                    private Long id;
+                }
+                """;
+
+        return content.replace("$classPackage", classPackage).replace("$className", className);
+    }
+
+    public static String repository(String className, String classPackage) {
+        var content =
+                """
+                package $classPackage;
+                
+                import java.util.Optional;
+                
+                public interface $classNameRepository {
+                    $classNameEntity save($classNameEntity entity);
+                    Optional<$classNameEntity> findById(long id);
+                    void deleteAll();
+                }
+                """;
+
+        return content.replace("$classPackage", classPackage).replace("$className", className);
+    }
 }
