@@ -38,7 +38,9 @@ public class TextFileIntoSpockSpecification {
                     var when = get(MiroTextNamespace.extractText(specText, WHEN, THEN))
                             .then(TextFileIntoSpockSpecification::generateGivenOrThenDescription)
                             .value();
-                    var whenCodeBlock = List.of("true");
+                    var whenCodeBlock = get(MiroTextNamespace.extractText(specText, WHEN, THEN))
+                            .then(TextFileIntoSpockSpecification::generateWhenCodeBlock)
+                            .value();
                     var then = get(MiroTextNamespace.extractText(specText, THEN))
                             .then(TextFileIntoSpockSpecification::generateGivenOrThenDescription)
                             .value();
@@ -67,6 +69,24 @@ public class TextFileIntoSpockSpecification {
                 .map(MiroTextNamespace::removeTags)
                 .map(GroovyGeneratorNamespace::eventOccurredCodeBlock)
                 .toList();
+    }
+
+    public static List<String> generateWhenCodeBlock(List<String> whenText) {
+        var w1 = whenText.stream()
+                .filter(t -> t.contains("<<event>>"))
+                .map(MiroTextNamespace::removeJson)
+                .map(MiroTextNamespace::removeTags)
+                .map(GroovyGeneratorNamespace::eventOccurredCodeBlock)
+                .collect(Collectors.toList());
+        var w2 = whenText.stream()
+                .filter(t -> t.contains("<<command>>"))
+                .map(MiroTextNamespace::removeJson)
+                .map(MiroTextNamespace::removeTags)
+                .map(it -> "// " + it)
+                .toList();
+        w1.addAll(w2);
+        w1.add("true");
+        return w1;
     }
 
     private static List<String> generateThenCodeBlock(List<String> thenText) {

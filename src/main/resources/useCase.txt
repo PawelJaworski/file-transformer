@@ -1,7 +1,6 @@
-Use case: Propose date of event
-
-2024-12-12
-
-<<command>> propose date of event   { date: date }
-
-<<event>> date of event proposed   { date: date }
+Spec: propose event
+given
+when
+<<command>> propose event   { eventDescription: Wigilia firmowa }
+then
+<<event>> event type proposed   { eventDescription: Wigilia firmowa }

@@ -1,8 +1,6 @@
-Spec: given dates proposed then displayed
+Spec: propose event
 given
-<<event>> date of event proposed   { eventDate: 2024-12-12 }
-<<event>> date of event proposed   { eventDate: 2024-12-10 }
 when
+<<command>> propose event   { eventDescription: Wigilia firmowa }
 then
-<<view>>>> proposed dates   { date: date }
-<<comment>> proposed dates are displayed
+<<event>> event type proposed   { eventDescription: Wigilia firmowa }
