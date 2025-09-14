@@ -4,6 +4,8 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import java.io.IOException;
+
 /**
  * Unit test for simple App.
  */
@@ -34,5 +36,11 @@ public class AppTest
     public void testApp()
     {
         assertTrue( true );
+    }
+
+    public void testCommand() throws IOException {
+        var generator = new CommandGenerator(".", "generated");
+        generator.generate("COMMAND 'issue invoice'");
+
     }
 }
