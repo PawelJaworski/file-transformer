@@ -25,9 +25,15 @@ public class CommandGenerator implements Generator {
     }
 
     private void generateCommand(String syntax) throws IOException {
-        var commandName = javaGenerator.className(StringUtils.substringsBetween(syntax, "'", "'")[0]) + "Cmd";
-        var packageName =  javaGenerator.packageName(basePackage + ".application."  + commandName);
-        var file = javaGenerator.getElseCreateJavaFile(packageName, commandName);
-        javaGenerator.createRecord(file, "String nip, LocalDate invoiceDate");
+        var command = javaGenerator.className(StringUtils.substringsBetween(syntax, "'", "'")[0]);
+        var packageName = javaGenerator.packageName(basePackage + ".application."  + command);
+
+        var commandClass =  command + "Cmd";
+        var commandFile = javaGenerator.getElseCreateJavaFile(packageName, commandClass);
+        javaGenerator.createRecord(commandFile, "String nip, LocalDate invoiceDate");
+
+        var handlerClass = command + "Handler";
+        var handlerFile = javaGenerator.getElseCreateJavaFile(packageName, handlerClass);
+        javaGenerator.createCommandHandler(handlerFile, commandClass);
     }
 }
