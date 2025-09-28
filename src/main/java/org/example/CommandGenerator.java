@@ -35,5 +35,9 @@ public class CommandGenerator implements Generator {
         var handlerClass = command + "Handler";
         var handlerFile = javaGenerator.getElseCreateJavaFile(packageName, handlerClass);
         javaGenerator.createCommandHandler(handlerFile, commandClass);
+
+        var handlerAbilityClass = command + "HandlerAbility";
+        var handlerAbilityFile = javaGenerator.getElseCreateJavaTestFile(packageName, handlerAbilityClass);
+        javaGenerator.createCommandHandlerAbility(handlerAbilityFile);
     }
 }

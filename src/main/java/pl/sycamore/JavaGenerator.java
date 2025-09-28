@@ -35,6 +35,26 @@ public final class JavaGenerator {
         return file;
     }
 
+    public File getElseCreateJavaTestFile(String packg, String className) {
+        var filePath = projectPath + CodePackage.fromPackageName(packg)
+                .testJavaPath() + "/" + className + ".java";
+        var file = new File(filePath);
+
+        try {
+            File parentDir = file.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+
+            file.createNewFile();
+            System.out.println("Is command file exist: " + file.getAbsolutePath());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return file;
+    }
+
     public void createRecord(File file, String parameters) throws IOException {
         var className = file.getName().replace(".java", "");
         var record = """
@@ -89,6 +109,35 @@ public final class JavaGenerator {
         writer.close();
     }
 
+    public void createCommandHandlerAbility(File handlerFile) throws IOException {
+        var className = handlerFile.getName().replace(".java", "");
+        var abilityInterface = """
+        package $packageName;
+        
+        $imports
+        
+        interface $className {
+            $commandHandlerName INSTANCE = new $commandHandlerName();
+            
+            default $commandHandlerName get$commandHandlerName() {
+              return INSTANCE;
+            }
+        }
+        """;
+
+        var commandHandlerName = className.replace("Ability", "");
+        var packageName = testPackageName(handlerFile);
+        var imports = "";
+
+        FileWriter writer = new FileWriter(handlerFile);
+        writer.write(abilityInterface
+                .replace("$packageName", packageName)
+                .replace("$imports", imports)
+                .replace("$className", className)
+                .replace("$commandHandlerName", commandHandlerName));
+        writer.close();
+    }
+
     public String className(String text) {
         return CaseUtils.toCamelCase(text, true, ' ');
     }
@@ -100,6 +149,12 @@ public final class JavaGenerator {
     private String packageName(File file) {
         return CodePackage
                 .fromRelativePath(file.getParent().substring(file.getPath().lastIndexOf("src/main/java") + "src/main/java".length() + 1))
+                .packageName();
+    }
+
+    private String testPackageName(File file) {
+        return CodePackage
+                .fromRelativePath(file.getParent().substring(file.getPath().lastIndexOf("src/test/java") + "src/test/java".length() + 1))
                 .packageName();
     }
 }

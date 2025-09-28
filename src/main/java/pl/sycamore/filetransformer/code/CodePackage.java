@@ -1,7 +1,5 @@
 package pl.sycamore.filetransformer.code;
 
-import pl.sycamore.filetransformer.spock.JavaGeneratorNamespace;
-
 public record CodePackage(String packageName, String relativePath) {
     public static CodePackage fromPackageName(String packageName) {
         var relativePath = packageName.replace('.', '/');
@@ -15,6 +13,11 @@ public record CodePackage(String packageName, String relativePath) {
 
     public String mainJavaPath() {
         return "/src/main/java/"
+                + relativePath;
+    }
+
+    public String testJavaPath() {
+        return "/src/test/java/"
                 + relativePath;
     }
 }
